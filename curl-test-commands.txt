@@ -1,0 +1,5 @@
+curl -X POST --data "email=test@123.com&password=1234" http://127.0.0.1:8000/oauth/token
+
+curl --header "Authorization: Bearer {test}" http://127.0.0.1:8000/api/1/vehicles
+
+curl -X POST --header "Authorization: Bearer {test}" http://127.0.0.1:8000/api/1/vehicles/test/command/honk_horn
