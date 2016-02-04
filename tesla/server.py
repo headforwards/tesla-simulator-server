@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+# coding=utf-8
 
-from flask import Flask, session, request, make_response, jsonify
+from flask import Flask, session, request, make_response, jsonify, render_template
+from flask_socketio import SocketIO, emit, send
+from flask.ext.cors import CORS
+
 import os
 import random
 import string
@@ -15,10 +19,12 @@ class Config(object):
     HOST = '0.0.0.0'
     PORT = os.getenv('TESLA_PORT', 8000)
     #http://docs.timdorr.apiary.io/#reference/authentication/tokens
-    # TESLA_CLIENT_ID=e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e
-    # TESLA_CLIENT_SECRET=c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220
+    #TESLA_CLIENT_ID=e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e
+    #TESLA_CLIENT_SECRET=c75f14bbadc8bee3a7594412c31⁄416f8300256d7668ea7e6e7f06727bfb9d220
 
 app = Flask(__name__)
+socketio = SocketIO(app)
+CORS(app)
 
 #Not using sessions - we are returning an access_token, store a dictionary of
 #these as keys to vehicle data, etc.
@@ -70,7 +76,7 @@ def get_vehicles():
     except KeyError:
         vehicle_id = get_random_string();
         info['vehicles'] = [ { "vehicle_id": vehicle_id }]
-    
+
     return jsonify({"response": [{
           "color": "red",
           "display_name": "my car",
@@ -94,11 +100,11 @@ def find_vehicle(vehicle_id, info):
     print "Vehicle id ", vehicle_id
     if info['vehicles'][0]['vehicle_id'] == vehicle_id:
         return info['vehicles'][0]['vehicle_id']
-    raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user') 
+    raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
 
 @app.route('/api/1/vehicles/<vehicle_id>/command/honk_horn', methods=['POST'])
 def honk_horn(vehicle_id):
-    try: 
+    try:
         info = find_user(request)
 
         find_vehicle(vehicle_id, info)
@@ -112,11 +118,24 @@ def honk_horn(vehicle_id):
 
     except KeyError:
         return make_response(jsonify({'error': 'Unauthorized access'}), 403)
-    
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@socketio.on('message')
+def handle_message(message):
+    print('received message: ', message)
+    #Check the message type...
+    #
+    # send(message)
 
 def main():
     app.secret_key = '\xc85\x95\x9a\x80\xc1\x93\xd0\xe9\x95\x08\xfb\xbe\x85\xd0\x1aq\xd3\x95\xc9\xad \xc0\x08'
-    app.run(debug=Config.DEBUG, port=Config.PORT)
+    #app.run(debug=Config.DEBUG, port=Config.PORT)
+
+    socketio.run(app, debug=Config.DEBUG, port=Config.PORT)
 
 if __name__ == '__main__':
     main()
