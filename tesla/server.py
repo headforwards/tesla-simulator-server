@@ -29,6 +29,7 @@ CORS(app)
 #Not using sessions - we are returning an access_token, store a dictionary of
 #these as keys to vehicle data, etc.
 tokens = {}
+vehicles = []
 
 @app.errorhandler(404)
 def not_found(error):
@@ -76,6 +77,7 @@ def get_vehicles():
     except KeyError:
         vehicle_id = get_random_string();
         info['vehicles'] = [ { "vehicle_id": vehicle_id }]
+        vehicles.append(vehicle_id);
 
     return jsonify({"response": [{
           "color": "red",
@@ -108,7 +110,7 @@ def honk_horn(vehicle_id):
         info = find_user(request)
 
         find_vehicle(vehicle_id, info)
-
+        socketio.send({ 'command': 'honk_horn', 'vehicle_id': vehicle_id }, json=True);
         return jsonify({
           "response": {
             "result": True,
@@ -124,17 +126,18 @@ def honk_horn(vehicle_id):
 def index():
     return render_template('index.html')
 
-@socketio.on('message')
-def handle_message(message):
-    print('received message: ', message)
-    #Check the message type...
-    #
-    # send(message)
+@socketio.on('json')
+def handle_message(json):
+    print('received json: ', json)
+    try:
+      command = json['command']
+      if command == 'list_vehicle_ids':
+        send(vehicles, json=True)
+    except AttributeError:
+      send({'error': 'Bad Request'}, json=True)
 
 def main():
     app.secret_key = '\xc85\x95\x9a\x80\xc1\x93\xd0\xe9\x95\x08\xfb\xbe\x85\xd0\x1aq\xd3\x95\xc9\xad \xc0\x08'
-    #app.run(debug=Config.DEBUG, port=Config.PORT)
-
     socketio.run(app, debug=Config.DEBUG, port=Config.PORT)
 
 if __name__ == '__main__':
