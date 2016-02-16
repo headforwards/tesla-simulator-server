@@ -8,3 +8,11 @@ setup:
 clean:
 	rm -rf env/
 .PHONY: clean
+
+env:
+	$(VIRTUAL) /bin/bash
+.PHONY: env
+
+run:
+	$(VIRTUAL) python tesla/server.py
+.PHONY: run
