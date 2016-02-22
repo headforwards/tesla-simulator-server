@@ -1,18 +1,18 @@
 import random
 import re
 
-from flask import request, make_response, jsonify, Blueprint, current_app as app
+from flask import request, make_response, jsonify, abort, Blueprint, current_app as app
 
 tokens = {}
 vehicles = []
 blue_api = Blueprint('api', __name__)
-
+auth_api = Blueprint('oauth', __name__)
 
 def get_random_string():
     return 'test'
 
-
-@blue_api.route('/oauth/token', methods=['POST'])
+#This doesn't have an /api/1 prefix!
+@auth_api.route('/oauth/token', methods=['POST'])
 def oauth_token():
     if request.form and request.form['email']:
         #Create session
@@ -85,18 +85,94 @@ def find_vehicle(vehicle_id, info):
     raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
 
 
-@blue_api.route('/vehicles/<vehicle_id>/command/honk_horn', methods=['POST'])
-def honk_horn(vehicle_id):
+valid_commands = (
+  'honk_horn',
+  'lights_on',
+  'lights_off'
+)
+@blue_api.route('/vehicles/<vehicle_id>/command/<command>', methods=['POST'])
+def handle_command(vehicle_id, command):
     try:
         info = find_user(request)
 
         find_vehicle(vehicle_id, info)
-        app.socketio.send({ 'command': 'honk_horn', 'vehicle_id': vehicle_id }, json=True);
+
+        if not command in valid_commands:
+          abort(404);
+        
+        app.socketio.send({ 'command': command, 'vehicle_id': vehicle_id }, json=True);
         return jsonify({
           "response": {
             "result": True,
             "reason": ""
           }
+        })
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+
+valid_requests = (
+  'charge_state',
+  'climate_state',
+  #'drive_state'
+)
+
+responses = {
+  'charge_state': {
+    "charging_state": "Complete",  # "Charging", ??
+    "charge_to_max_range": False,  # current std/max-range setting
+    "max_range_charge_counter": 0,
+    "fast_charger_present": False, # connected to Supercharger?
+    "battery_range": 239.02,       # rated miles
+    "est_battery_range": 155.79,   # range estimated from recent driving
+    "ideal_battery_range": 275.09, # ideal miles
+    "battery_level": 91,           # integer charge percentage
+    "battery_current": -0.6,       # current flowing into battery
+    "charge_starting_range": None,
+    "charge_starting_soc": None,
+    "charger_voltage": 0,          # only has value while charging
+    "charger_pilot_current": 40,   # max current allowed by charger & adapter
+    "charger_actual_current": 0,   # current actually being drawn
+    "charger_power": 0,            # kW (rounded down) of charger
+    "time_to_full_charge": None,   # valid only while charging
+    "charge_rate": -1.0,           # float mi/hr charging or -1 if not charging
+    "charge_port_door_open": True
+  },
+
+  'climate_state': {
+    "inside_temp": 17.0,          # degC inside car
+    "outside_temp": 9.5,          # degC outside car or None
+    "driver_temp_setting": 22.6,  # degC of driver temperature setpoint
+    "passenger_temp_setting": 22.6, # degC of passenger temperature setpoint
+    "is_auto_conditioning_on": False, # apparently even if on
+    "is_front_defroster_on": None, # None or boolean as integer?
+    "is_rear_defroster_on": False,
+    "fan_status": 0               # fan speed 0-6 or None
+  },
+
+  'drive_state': {
+    "shift_state": None,          #
+    "speed": None,                #
+    "latitude": 33.794839,        # degrees N of equator
+    "longitude": -84.401593,      # degrees W of the prime meridian
+    "heading": 4,                 # integer compass heading, 0-359
+    "gps_as_of": 1359863204       # Unix timestamp of GPS fix
+  }
+}
+
+@blue_api.route('/vehicles/<vehicle_id>/data_request/<request_type>', methods=['GET'])
+def handle_requests(vehicle_id, request_type):
+    try:
+        info = find_user(request)
+
+        find_vehicle(vehicle_id, info)
+
+        if not request_type in responses:
+          abort(404);
+        
+        return jsonify({
+          "response": responses[request_type]
         })
 
     except KeyError:
