@@ -99,7 +99,7 @@ def handle_command(vehicle_id, command):
 
         if not command in valid_commands:
           abort(404);
-        
+
         app.socketio.send({ 'command': command, 'vehicle_id': vehicle_id }, json=True);
         return jsonify({
           "response": {
@@ -170,7 +170,7 @@ def handle_requests(vehicle_id, request_type):
 
         if not request_type in responses:
           abort(404);
-        
+
         return jsonify({
           "response": responses[request_type]
         })
