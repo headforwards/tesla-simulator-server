@@ -4,13 +4,14 @@ from flask.ext.socketio import emit
 
 from flask import jsonify
 
+from vehicles import vehicles
+
 app = create_app()
 
 @app.socketio.on('json')
 def test_message(json):
     print('json ', json)
     #use try !
-    vehicle_ids = ('test',)
     #if json.command and json.command == 'list_vehicle_ids':
       # if json.email:
       #     find vehicles belonging to user
@@ -20,7 +21,7 @@ def test_message(json):
       "command": "list_vehicle_ids",
       #"email": json['email'],
       "response": {
-          "vehicle_ids": vehicle_ids
+          "vehicle_ids": vehicles
       }
     }
     emit('json', message)

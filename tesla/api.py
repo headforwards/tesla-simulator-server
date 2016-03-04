@@ -1,15 +1,15 @@
-import random
+import uuid
 import re
 
 from flask import request, make_response, jsonify, abort, Blueprint, current_app as app
+from vehicles import vehicles, tokens
 
-tokens = {}
-vehicles = []
 blue_api = Blueprint('api', __name__)
 auth_api = Blueprint('oauth', __name__)
 
 def get_random_string():
-    return 'test'
+    return str(uuid.uuid4())
+    #return 'test'
 
 #This doesn't have an /api/1 prefix!
 @auth_api.route('/oauth/token', methods=['POST'])
