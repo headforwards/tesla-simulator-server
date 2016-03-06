@@ -12,7 +12,10 @@ JSONEncoder_old = json.JSONEncoder.default
 
 
 def JSONEncoder_new(self, obj):
-    if isinstance(obj, uuid.UUID): return str(obj)
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    elif isinstance(obj, TeslaVehicle):
+        return repr(obj)
     return JSONEncoder_old(self, obj)
 json.JSONEncoder.default = JSONEncoder_new
 
@@ -38,7 +41,6 @@ class TeslaVehicle(object):
         return self.status
 
     def switch_lights(self, action):
-        # if action not in [__OFF__, __ON__]: exception
         self.lights = action
         return self.status
 
@@ -49,9 +51,6 @@ class TeslaVehicle(object):
 
 class Vehicles(object):
     _VEHICLES = {}
-
-    def __init__(self):
-        self.create_vehicle('Tesla1')
 
     def __getitem__(self, vehicle_id):
         return self._VEHICLES[vehicle_id]
@@ -64,5 +63,12 @@ class Vehicles(object):
         self._VEHICLES[str(vehicle.vehicle_id)] = vehicle
         return vehicle
 
+    def find_vehicle(self, user_id):
+        vehicles = list(filter(lambda x: x[1].user_id == user_id,  self._VEHICLES))
+        if not vehicles:
+            vehicles = [self.create_vehicle('my vehicle', user_id)]
+        return vehicles
+
 
 vehicles = Vehicles()
+tokens = {}

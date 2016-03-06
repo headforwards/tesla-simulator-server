@@ -2,7 +2,7 @@ import uuid
 import re
 
 from flask import request, make_response, jsonify, abort, Blueprint, current_app as app
-from vehicles import vehicles, tokens
+from models import vehicles, tokens
 
 blue_api = Blueprint('api', __name__)
 auth_api = Blueprint('oauth', __name__)
@@ -52,36 +52,23 @@ def get_vehicles():
     except KeyError:
         return make_response(jsonify({'error': 'Unauthorized access'}), 403)
     try:
-        vehicle_id = info['vehicles'][0]["vehicle_id"]
+        vehicle_id = info['vehicles'][0].vehicle_id
     except KeyError:
-        vehicle_id = get_random_string();
-        info['vehicles'] = [ { "vehicle_id": vehicle_id }]
-        vehicles.append(vehicle_id);
+        my_vehicles = vehicles.find_vehicle(info['email'])
+        info['vehicles'] = my_vehicles
 
-    return jsonify({"response": [{
-          "color": "red",
-          "display_name": "my car",
-          "id": 321,
-          "option_codes": "MS01,RENA,TM00,DRLH,PF00,BT85,PBCW,RFPO,WT19,IBMB,IDPB,TR00,SU01,SC01,TP01,AU01,CH00,HP00,PA00,PS00,AD02,X020,X025,X001,X003,X007,X011,X013",
-          "user_id": 123,
-          "vehicle_id": vehicle_id,
-          "vin": "5YJSA1CN5CFP01657",
-          "tokens": [
-            "x",
-            "x"
-          ],
-          "state": "online"
-        }
-      ],
-      "count": 1
+    print(my_vehicles)
+    return jsonify({
+        "response": my_vehicles,
+        "count": len(my_vehicles)
     })
 
 
 def find_vehicle(vehicle_id, info):
     print(tokens)
     print("Vehicle id ", vehicle_id)
-    if info['vehicles'][0]['vehicle_id'] == vehicle_id:
-        return info['vehicles'][0]['vehicle_id']
+    if info['vehicles'][0].vehicle_id == vehicle_id:
+        return info['vehicles'][0].vehicle_id
     raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
 
 
