@@ -1,15 +1,15 @@
-import random
+import uuid
 import re
 
 from flask import request, make_response, jsonify, abort, Blueprint, current_app as app
+from vehicles import vehicles, tokens
 
-tokens = {}
-vehicles = []
 blue_api = Blueprint('api', __name__)
 auth_api = Blueprint('oauth', __name__)
 
 def get_random_string():
-    return 'test'
+    return str(uuid.uuid4())
+    #return 'test'
 
 #This doesn't have an /api/1 prefix!
 @auth_api.route('/oauth/token', methods=['POST'])
@@ -35,8 +35,8 @@ def find_user(request):
             request.headers['Authorization']
             )
 
-    print 'find_user ', token
-    print tokens
+    print('find_user ', token)
+    print(tokens)
     return tokens[token]
 
 
@@ -46,7 +46,7 @@ def get_vehicles():
     #check session for vehicle list
         #create if not exist
     #return vehicle id, etc
-    print tokens
+    print(tokens)
     try:
         info = find_user(request)
     except KeyError:
@@ -78,8 +78,8 @@ def get_vehicles():
 
 
 def find_vehicle(vehicle_id, info):
-    print tokens
-    print "Vehicle id ", vehicle_id
+    print(tokens)
+    print("Vehicle id ", vehicle_id)
     if info['vehicles'][0]['vehicle_id'] == vehicle_id:
         return info['vehicles'][0]['vehicle_id']
     raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
