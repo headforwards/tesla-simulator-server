@@ -18,10 +18,10 @@ json.JSONEncoder.default = JSONEncoder_new
 
 
 class TeslaVehicle(object):
-    def __init__(self, name, user_id, color, vehicle_id=None, state=None):
+    def __init__(self, name, user_id, color, vehicle_id=None):
         self.color = color
-        self.name = name
-        self.state = state or __OFF__
+        self.display_name = name
+        self.state = 'online'
         self.user_id = user_id
         self.lights = __OFF__
         self.horn = __OFF__
@@ -32,30 +32,37 @@ class TeslaVehicle(object):
 
     @property
     def status(self):
-
         return json.dumps(self.__dict__)
 
     def hork_horn(self):
-        # TODO: Play a sound
-
         return self.status
 
     def switch_lights(self, action):
         # if action not in [__OFF__, __ON__]: exception
         self.lights = action
+        return self.status
 
+    def set_user(self, user_id):
+        self.user_id = user_id
         return self.status
 
 
-class Garage(object):
+class Vehicles(object):
     _VEHICLES = {}
-    _INSTANCE = None
 
-    def create_vehicle(self, name, user_id):
+    def __init__(self):
+        self.create_vehicle('Tesla1')
+
+    def __getitem__(self, vehicle_id):
+        return self._VEHICLES[vehicle_id]
+
+    def __len__(self):
+        return len(self._VEHICLES)
+
+    def create_vehicle(self, name, user_id=None):
         vehicle = TeslaVehicle(name, user_id, choice(__COLOR__))
         self._VEHICLES[str(vehicle.vehicle_id)] = vehicle
-
         return vehicle
 
 
-garage = Garage()
+vehicles = Vehicles()
