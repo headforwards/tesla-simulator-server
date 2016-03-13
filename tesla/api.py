@@ -52,14 +52,13 @@ def get_vehicles():
     except KeyError:
         return make_response(jsonify({'error': 'Unauthorized access'}), 403)
     try:
-        vehicle_id = info['vehicles'][0].vehicle_id
+        my_vehicles = info['vehicles']
     except KeyError:
         my_vehicles = vehicles.find_vehicle(info['email'])
         info['vehicles'] = my_vehicles
 
-    print(my_vehicles)
     return jsonify({
-        "response": my_vehicles,
+        "response": [veh.__dict__ for veh in my_vehicles],
         "count": len(my_vehicles)
     })
 
