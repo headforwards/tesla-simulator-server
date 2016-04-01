@@ -6,6 +6,7 @@ from config import Config
 from api import blue_api, auth_api
 from views import blue_views
 
+socketio = SocketIO()
 
 def create_app():
     '''Create app.'''
@@ -15,7 +16,10 @@ def create_app():
         template_folder='templates'
     )
     CORS(app)
-    app.socketio = SocketIO(app)
+
+    socketio.init_app(app)
+
+    app.socketio = socketio
 
     @app.errorhandler(404)
     def not_found(error):
