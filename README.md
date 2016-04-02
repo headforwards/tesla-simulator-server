@@ -10,9 +10,12 @@ When you actually use the tesla app to control your real tesla what you do is se
 
 This project has three parts:
 
-Client 
+Client
+
 Server
+
 Example
+
 
 # Client - think of it as your virtual Tesla Car
 1. This is your webpage that will create your virtual car.
