@@ -1,4 +1,4 @@
-# tesla-simulator-server
+# Start Here
 
 Not everybody has a tesla car to be able to test with so this project allows you to create a virtual car that you can use to test with.
 
@@ -25,5 +25,5 @@ Example
 # Example - What you could build with the two previous
 You click a button it sends and API call to the Server which then changes the car on the Client
 
-# This is as far as I have gone with the process when I have some more time I will update this page to show you how to set them up for youself
+# This is as far as I have gone with the process when I have some more time I will update this page to show you how to set them up for yourself
 
