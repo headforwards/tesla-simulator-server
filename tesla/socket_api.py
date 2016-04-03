@@ -1,20 +1,19 @@
 from app import socketio
-
 from flask.ext.socketio import emit
 
-from vehicles import vehicles, tokens
-
+from models import vehicles, tokens
 
 #Clean up / replace with Victors "Garage" stuff.
 def find_user_vehicles(email):
-    for token in tokens.itervalues():
+    for id, token in tokens.items():
         if token['email'] == email:
-            print('found user ', email, ', vehicles: ', token['vehicles'])
+            print('found user ', email)
             vehicles = None
             if token['vehicles']:
+                print('vehicles: ', token['vehicles'])
                 vehicles = []
                 for vehicle in token['vehicles']:
-                    vehicles.append(vehicle['vehicle_id'])
+                    vehicles.append(vehicle.vehicle_id)
             return vehicles
 
     return None
@@ -22,7 +21,7 @@ def find_user_vehicles(email):
 @socketio.on('list_vehicle_ids')
 def list_vehicle_ids(params):
     print('list_vehicle_ids ', params)
-    
+
     vechicles_result = None;
     message = {}
 

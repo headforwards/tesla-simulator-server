@@ -28,7 +28,7 @@ class TeslaVehicle(object):
         self.user_id = user_id
         self.lights = __OFF__
         self.horn = __OFF__
-        self.vehicle_id = vehicle_id or uuid.uuid4()
+        self.vehicle_id = vehicle_id or str(uuid.uuid4())
 
     def __repr__(self):
         return self.status
