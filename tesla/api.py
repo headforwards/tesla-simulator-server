@@ -88,7 +88,10 @@ def find_vehicle(vehicle_id, info):
 valid_commands = (
   'honk_horn',
   'lights_on',
-  'lights_off'
+  'lights_off',
+  'wake_up',
+  'start_charging',
+  'stop_charging'
 )
 @blue_api.route('/vehicles/<vehicle_id>/command/<command>', methods=['POST'])
 def handle_command(vehicle_id, command):
