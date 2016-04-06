@@ -4,4 +4,5 @@ Flask==0.10.1
 eventlet==0.18.3
 python-engineio==0.8.7
 python-socketio==1.0
+requests==2.9.1
 uuid==1.30
