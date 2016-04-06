@@ -69,6 +69,9 @@ class Vehicles(object):
             vehicles = [self.create_vehicle('my vehicle', user_id)]
         return vehicles
 
+    def find_all_vehicles(self):
+        return self._VEHICLES
+
 
 vehicles = Vehicles()
 tokens = {}

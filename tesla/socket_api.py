@@ -9,30 +9,38 @@ def find_user_vehicles(email):
         if token['email'] == email:
             print('found user ', email)
             vehicles = None
-            if token['vehicles']:
-                print('vehicles: ', token['vehicles'])
-                vehicles = []
-                for vehicle in token['vehicles']:
-                    vehicles.append(vehicle.vehicle_id)
-            return vehicles
+            try:
+                my_vehicles = info['vehicles']
+            except KeyError:
+                my_vehicles = vehicles.find_vehicle(info['email'])
+                token['vehicles'] = my_vehicles
+
+            print('find_user_vehicles: ', my_vehicles)
+            return my_vehicles
 
     return None
+
+def find_all_vehicles():
+    return  vehicles.find_all_vehicles()
 
 @socketio.on('list_vehicle_ids')
 def list_vehicle_ids(params):
     print('list_vehicle_ids ', params)
 
-    vechicles_result = None;
     message = {}
 
     if params and params['email']:
         message['email'] = params['email'],
-        vechicles_result = find_user_vehicles(params['email'])
+        my_vehicles = find_user_vehicles(params['email'])
     else:
-        vechicles_result = vehicles
+        my_vehicles = find_all_vehicles()
+
+    vehicle_ids = []
+    for vehicle in my_vehicles:
+        vehicle_ids.append(vehicle)
 
     message['response'] = {
-        "vehicle_ids": vechicles_result
+        "vehicle_ids": vehicle_ids
     }
 
     print('list_vehicle_ids result', message)
