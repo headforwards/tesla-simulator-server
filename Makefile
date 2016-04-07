@@ -1,7 +1,7 @@
 VIRTUAL = . env/bin/activate &&
 
 setup:
-	virtualenv env
+	virtualenv -p python3 env
 	$(VIRTUAL) pip install -r requirements.txt
 .PHONY: setup
 

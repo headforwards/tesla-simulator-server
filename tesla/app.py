@@ -3,9 +3,10 @@ from flask_socketio import SocketIO
 from flask.ext.cors import CORS
 
 from config import Config
-from api import blue_api
+from api import blue_api, auth_api
 from views import blue_views
 
+socketio = SocketIO()
 
 def create_app():
     '''Create app.'''
@@ -15,7 +16,10 @@ def create_app():
         template_folder='templates'
     )
     CORS(app)
-    app.socketio = SocketIO(app)
+
+    socketio.init_app(app)
+
+    app.socketio = socketio
 
     @app.errorhandler(404)
     def not_found(error):
@@ -23,6 +27,7 @@ def create_app():
 
     app.config.from_object(Config())
     with app.app_context():
+        app.register_blueprint(auth_api, url_prefix='')
         app.register_blueprint(blue_api, url_prefix='/api/1')
         app.register_blueprint(blue_views, url_prefix='/')
 
