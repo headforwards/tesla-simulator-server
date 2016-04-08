@@ -36,8 +36,9 @@ def list_vehicle_ids(params):
         my_vehicles = find_all_vehicles()
 
     vehicle_ids = []
-    for vehicle in my_vehicles:
-        vehicle_ids.append(vehicle)
+    if my_vehicles is not None:
+    	for vehicle in my_vehicles:
+        	vehicle_ids.append(vehicle)
 
     message['response'] = {
         "vehicle_ids": vehicle_ids
