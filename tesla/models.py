@@ -48,6 +48,9 @@ class TeslaVehicle(object):
         self.user_id = user_id
         return self.status
 
+    def get_user_id(self):
+        return self.user_id
+
 
 class Vehicles(object):
     _VEHICLES = {}
@@ -64,7 +67,8 @@ class Vehicles(object):
         return vehicle
 
     def find_vehicle(self, user_id):
-        vehicles = list(filter(lambda x: x[1].user_id == user_id,  self._VEHICLES))
+        vehicles = list(filter(lambda x: x[1].get_user_id() == user_id,
+            self._VEHICLES.items()))
         if not vehicles:
             vehicles = [self.create_vehicle('my vehicle', user_id)]
         return vehicles

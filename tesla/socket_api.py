@@ -8,7 +8,7 @@ def find_user_vehicles(email):
     for id, token in tokens.items():
         if token['email'] == email:
             print('found user ', email)
-            vehicles = None
+            # vehicles = None #This seems odd
             try:
                 my_vehicles = info['vehicles']
             except KeyError:
@@ -34,6 +34,9 @@ def list_vehicle_ids(params):
         my_vehicles = find_user_vehicles(params['email'])
     else:
         my_vehicles = find_all_vehicles()
+
+    if(my_vehicles == None):
+        return
 
     vehicle_ids = []
     for vehicle in my_vehicles:
