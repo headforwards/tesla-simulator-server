@@ -28,6 +28,8 @@ class TeslaVehicle(object):
         self.user_id = user_id
         self.lights = __OFF__
         self.horn = __OFF__
+        self.pin = None
+        self.valet_mode = __OFF__
         self.vehicle_id = vehicle_id or str(uuid.uuid4())
 
     def __repr__(self):
@@ -44,10 +46,23 @@ class TeslaVehicle(object):
         self.lights = action
         return self.status
 
+    def reset_valet_pin (self):
+        self.pin = 0000
+
+    def set_valet_mode(self, action, pin=None):
+        self.pin = pin if pin else self.pin
+        # FIXME == True when (api.js 122)
+        self.valet_mode = __ON__ if action == 'true' else __OFF__
+
     def set_user(self, user_id):
         self.user_id = user_id
         return self.status
 
+    def get_user_id(self):
+        return self.user_id
+
+    def get_vehicle_id(self):
+        return self.vehicle_id
 
 class Vehicles(object):
     _VEHICLES = {}
@@ -63,15 +78,17 @@ class Vehicles(object):
         self._VEHICLES[str(vehicle.vehicle_id)] = vehicle
         return vehicle
 
-    def find_vehicle(self, user_id):
-        vehicles = list(filter(lambda x: x[1].user_id == user_id,  self._VEHICLES))
+    def find_vehicles(self, user_id):
+        vehicles = list(filter(lambda x: x[1].get_user_id() == user_id,
+            self._VEHICLES.items()))
+
         if not vehicles:
-            vehicles = [self.create_vehicle('my vehicle', user_id)]
+            self.create_vehicle('my vehicle', user_id)
+            vehicles = self.find_vehicles(user_id)
         return vehicles
 
     def find_all_vehicles(self):
         return self._VEHICLES
-
 
 vehicles = Vehicles()
 tokens = {}

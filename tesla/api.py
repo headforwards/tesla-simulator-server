@@ -9,14 +9,13 @@ auth_api = Blueprint('oauth', __name__)
 
 def get_random_string():
     return str(uuid.uuid4())
-    #return 'test'
 
 #This doesn't have an /api/1 prefix!
 @auth_api.route('/oauth/token', methods=['POST'])
 def oauth_token():
     if request.form and request.form['email']:
         #Create session
-        token = get_random_string();
+        token = get_random_string()
         tokens[token] = {
             "email": request.form['email']
         }
@@ -32,34 +31,25 @@ def oauth_token():
 def find_user(request):
     token = re.sub(r'Bearer {([^}]+)}',
             '\g<1>',
-            request.headers['Authorization']
-            )
+            request.headers['Authorization'])
 
     print('find_user ', token)
-    print(tokens)
     return tokens[token]
 
 
 @blue_api.route('/vehicles', methods=['GET'])
 def get_vehicles():
-    #check bearer token
-    #check session for vehicle list
-        #create if not exist
-    #return vehicle id, etc
-    print(tokens)
 
     try:
         info = find_user(request)
     except KeyError:
         return make_response(jsonify({'error': 'Unauthorized access'}), 403)
-    try:
-        my_vehicles = info['vehicles']
-    except KeyError:
-        my_vehicles = vehicles.find_vehicle(info['email'])
-        info['vehicles'] = my_vehicles
+
+    my_vehicles = vehicles.find_vehicles(info['email'])
+    print ('my_vehicles', my_vehicles)
 
     return jsonify({
-        "response": [veh.__dict__ for veh in my_vehicles],
+        "response": [veh[1].__dict__ for veh in my_vehicles],
         "count": len(my_vehicles)
     })
 
@@ -74,39 +64,112 @@ def find_vehicle(vehicle_id, info):
 
 
 valid_commands = (
-  'honk_horn',
-  'lights_on',
-  'lights_off',
-  'wake_up',
-  'start_charging',
-  'stop_charging'
+    'honk_horn',
+    'lights_on',
+    'lights_off',
+    'flash_lights',
+    'wake_up',
+    # 'charge_start',
+    # 'charge_stop',
+    # 'charge_port_door_open',
+    # 'charge_standard',
+    # 'charge_max_range',
+    # 'door_unlock',
+    # 'door_lock',
+    # 'auto_conditioning_start',
+    # 'auto_conditioning_stop',
 )
+
+# 'set_charge_limit', body: {percent: percent})
+# 'set_temps', body: {driver_temp: driver_temp, passenger_temp: passenger_temp})
+# 'sun_roof_control', body: {state: state})
+# 'sun_roof_control', body: {state: "move", percent: percent})
+# 'remote_start_drive', body: {password: password})
+# 'trunk_open', body: {which_trunk: "rear"})
+# 'trunk_open', body: {which_trunk: "front"})
+
+@blue_api.route('/vehicles/<vehicle_id>/command/reset_valet_pin', methods=['POST'])
+def reset_valet_pin(vehicle_id):
+    try:
+
+        info = find_user(request)
+        vehicle = vehicles[vehicle_id]
+        print('vehicle', vehicle, 'info', info, 'request', request)
+
+        if vehicle.get_user_id() != info['email']:
+            abort(401)
+
+        vehicle.reset_valet_pin()
+
+        return send_reply(vehicle_id, 'reset_valet_pin')
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+# ("set_valet_mode", body: {on: on, password: password})
+@blue_api.route('/vehicles/<vehicle_id>/command/set_valet_mode', methods=['POST'])
+def set_valet_mode(vehicle_id):
+    try:
+
+        info = find_user(request)
+        vehicle = vehicles[vehicle_id]
+        print('vehicle', vehicle, 'info', info, 'request', request)
+
+        if vehicle.get_user_id() != info['email']:
+            abort(401)
+
+        pin = request.form['password']
+        # FIXME parse json boolean
+        on = request.form['on']
+
+        vehicle.set_valet_mode(on, pin)
+
+        return send_reply(vehicle_id, 'set_valet_mode')
+
+    except KeyError:
+        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
 @blue_api.route('/vehicles/<vehicle_id>/command/<command>', methods=['POST'])
 def handle_command(vehicle_id, command):
     try:
-        info = find_user(request)
-
-        find_vehicle(vehicle_id, info)
 
         if not command in valid_commands:
-          abort(404);
+            abort(404)
 
-        app.socketio.send({ 'command': command, 'vehicle_id': vehicle_id }, json=True);
-        return jsonify({
-          "response": {
-            "result": True,
-            "reason": ""
-          }
-        })
+        info = find_user(request)
+        vehicle = vehicles[vehicle_id]
+        print('vehicle', vehicle, 'info', info['email'])
+
+        if vehicle.get_user_id() != info['email']:
+            abort(401)
+
+        return send_reply(vehicle_id, command)
 
     except KeyError:
         return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
 
+def send_reply(vehicle_id, command):
+        app.socketio.send({
+            'command': command,
+            'vehicle_id': vehicle_id
+        }, json=True);
+
+        return jsonify({
+            "response": {
+                "result": True,
+                "reason": ""
+            }
+        })
+
+
 valid_requests = (
   'charge_state',
   'climate_state',
-  #'drive_state'
+  # 'drive_state',
+  # 'vehicle_state',
+  # 'gui_settings',
+  # 'mobile_enabled',
 )
 
 responses = {
