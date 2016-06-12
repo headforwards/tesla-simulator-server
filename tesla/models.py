@@ -64,6 +64,7 @@ class TeslaVehicle(object):
     def get_vehicle_id(self):
         return self.vehicle_id
 
+
 class Vehicles(object):
     _VEHICLES = {}
 
