@@ -28,8 +28,15 @@ class TeslaVehicle(object):
         self.user_id = user_id
         self.lights = __OFF__
         self.horn = __OFF__
-        self.pin = None
+        self.password = None
         self.valet_mode = __OFF__
+        self.charging = __OFF__
+        self.door_locked = __OFF__
+        self.charge_port_door = __OFF__
+        self.charge_mode = 90
+        self.havc_system = __ON__
+        self.passenger_temp = 18.0
+        self.driver_temp = 18.0
         self.vehicle_id = vehicle_id or str(uuid.uuid4())
 
     def __repr__(self):
@@ -47,12 +54,51 @@ class TeslaVehicle(object):
         return self.status
 
     def reset_valet_pin (self):
-        self.pin = 0000
+        self.password = None
 
-    def set_valet_mode(self, action, pin=None):
-        self.pin = pin if pin else self.pin
+    def set_valet_mode(self, on, password=None):
+        self.password = password if password else self.password
         # FIXME == True when (api.js 122)
-        self.valet_mode = __ON__ if action == 'true' else __OFF__
+        self.valet_mode = __ON__ if on == True else __OFF__
+
+    def charge_start(self):
+        self.charging = __ON__
+
+    def charge_stop(self):
+        self.charging = __OFF__
+
+    def door_lock(self):
+        self.door_locked = __ON__
+
+    def door_unlock(self):
+        self.door_locked = __OFF__
+
+    def auto_conditioning_start(self):
+        self.havc_system = __ON__
+
+    def auto_conditioning_stop(self):
+        self.havc_system = __OFF__
+
+    def charge_port_door_open(self):
+        self.charge_port_door = __ON__
+
+    def charge_standard(self):
+        self.charge_mode = 90
+
+    def charge_max_range(self):
+        self.charge_mode = 100
+
+    def charge_limit(self, charge):
+        self.charge_mode = charge
+
+    def remote_start_drive(self, password):
+        # The password to the authenticated
+        # my.teslamotors.com account.
+        self.state = 'running'
+
+    def set_temps(self, driver_temp, passenger_temp):
+        self.passenger_temp = passenger_temp
+        self.driver_temp = driver_temp
 
     def set_user(self, user_id):
         self.user_id = user_id

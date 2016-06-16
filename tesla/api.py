@@ -1,8 +1,9 @@
 import uuid
 import re
 
-from flask import request, make_response, jsonify, abort, Blueprint, current_app as app
+from flask import request, make_response, jsonify, json, abort, Blueprint, current_app as app
 from models import vehicles, tokens
+from functools import wraps
 
 blue_api = Blueprint('api', __name__)
 auth_api = Blueprint('oauth', __name__)
@@ -19,7 +20,7 @@ def oauth_token():
         tokens[token] = {
             "email": request.form['email']
         }
-        #session['email'] = request.form['email'],
+
         return jsonify({
           "access_token": token,
           "token_type": "bearer",
@@ -63,104 +64,102 @@ def find_vehicle(vehicle_id, info):
     raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
 
 
-valid_commands = (
-    'honk_horn',
-    'lights_on',
-    'lights_off',
-    'flash_lights',
-    'wake_up',
-    # 'charge_start',
-    # 'charge_stop',
-    # 'charge_port_door_open',
-    # 'charge_standard',
-    # 'charge_max_range',
-    # 'door_unlock',
-    # 'door_lock',
-    # 'auto_conditioning_start',
-    # 'auto_conditioning_stop',
-)
+valid_commands = {
+    'honk_horn': None,
+    'lights_on': None,
+    'lights_off': None,
+    'flash_lights': None,
+    'wake_up': None,
+    'charge_start': None,
+    'charge_stop': None,
+    'charge_port_door_open': None,
+    'charge_standard': None,
+    'charge_max_range': None,
+    'door_unlock': None,
+    'door_lock': None,
+    'auto_conditioning_start': None,
+    'auto_conditioning_stop': None,
+    'set_valet_mode': {'on': bool, 'password': str},
+    'reset_valet_pin': None,
+    'set_charge_limit': {'percent': int},
+    'remote_start_drive': {'password': str},
+    'set_temps': {'driver_temp': float, 'passenger_temp': float}
+}
 
-# 'set_charge_limit', body: {percent: percent})
-# 'set_temps', body: {driver_temp: driver_temp, passenger_temp: passenger_temp})
-# 'sun_roof_control', body: {state: state})
-# 'sun_roof_control', body: {state: "move", percent: percent})
-# 'remote_start_drive', body: {password: password})
-# 'trunk_open', body: {which_trunk: "rear"})
-# 'trunk_open', body: {which_trunk: "front"})
+# 'sun_roof_control': {state: state})
+# 'sun_roof_control': {state: "move", percent: percent})
+# 'trunk_open': {which_trunk: "rear"})
+# 'trunk_open': {which_trunk: "front"})
 
-@blue_api.route('/vehicles/<vehicle_id>/command/reset_valet_pin', methods=['POST'])
-def reset_valet_pin(vehicle_id):
-    try:
+def validate_json(func):
 
-        info = find_user(request)
-        vehicle = vehicles[vehicle_id]
-        print('vehicle', vehicle, 'info', info, 'request', request)
+    @wraps(func)
+    def wrapper(vehicle_id, command):
+        try:
+            if not command in list(valid_commands.keys()):
+                abort(404)
 
-        if vehicle.get_user_id() != info['email']:
-            abort(401)
+            command_kwargs = {}
 
-        vehicle.reset_valet_pin()
+            if valid_commands[command] != None:
+                for expected_arg, type in valid_commands[command].items():
+                    arg = request.form[expected_arg]
 
-        return send_reply(vehicle_id, 'reset_valet_pin')
+                    if (not isinstance(arg, type)):
+                        try:
+                            arg = json.loads(arg)
+                        except KeyError:
+                            return make_response(jsonify({
+                                'error': 'Bad Request'
+                            }), 400)
 
-    except KeyError:
-        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+                    if isinstance(arg, type) == False:
+                        abort(403)
 
-# ("set_valet_mode", body: {on: on, password: password})
-@blue_api.route('/vehicles/<vehicle_id>/command/set_valet_mode', methods=['POST'])
-def set_valet_mode(vehicle_id):
-    try:
+                    command_kwargs[expected_arg] = arg
 
-        info = find_user(request)
-        vehicle = vehicles[vehicle_id]
-        print('vehicle', vehicle, 'info', info, 'request', request)
+            return func(vehicle_id, command, command_kwargs)
 
-        if vehicle.get_user_id() != info['email']:
-            abort(401)
+        except KeyError:
+            return make_response(jsonify({
+                'error': 'Unauthorized access'
+            }), 403)
 
-        pin = request.form['password']
-        # FIXME parse json boolean
-        on = request.form['on']
-
-        vehicle.set_valet_mode(on, pin)
-
-        return send_reply(vehicle_id, 'set_valet_mode')
-
-    except KeyError:
-        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+    return wrapper
 
 @blue_api.route('/vehicles/<vehicle_id>/command/<command>', methods=['POST'])
-def handle_command(vehicle_id, command):
-    try:
+@validate_json
+def handle_command(vehicle_id, command, command_kwargs=None):
 
-        if not command in valid_commands:
-            abort(404)
+    info = find_user(request)
+    vehicle = vehicles[vehicle_id]
 
-        info = find_user(request)
-        vehicle = vehicles[vehicle_id]
-        print('vehicle', vehicle, 'info', info['email'])
+    print('vehicle', vehicle, 'info', info,
+        'command_kwargs', command_kwargs)
 
-        if vehicle.get_user_id() != info['email']:
-            abort(401)
+    if vehicle.get_user_id() != info['email']:
+        abort(401)
 
-        return send_reply(vehicle_id, command)
+    method = getattr(vehicle, command, None)
 
-    except KeyError:
-        return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+    if(method != None):
+        method(**command_kwargs)
+
+    return send_reply(vehicle_id, command)
 
 
 def send_reply(vehicle_id, command):
-        app.socketio.send({
-            'command': command,
-            'vehicle_id': vehicle_id
-        }, json=True);
+    app.socketio.send({
+        'command': command,
+        'vehicle_id': vehicle_id
+    }, json=True)
 
-        return jsonify({
-            "response": {
-                "result": True,
-                "reason": ""
-            }
-        })
+    return jsonify({
+        "response": {
+            "result": True,
+            "reason": ""
+        }
+    })
 
 
 valid_requests = (
