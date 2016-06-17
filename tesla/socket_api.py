@@ -8,7 +8,6 @@ def find_user_vehicles(email):
     for id, token in tokens.items():
         if token['email'] == email:
             print('found user ', email)
-            # vehicles = None #This seems odd
             try:
                 my_vehicles = info['vehicles']
             except KeyError:
