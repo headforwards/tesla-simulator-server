@@ -54,13 +54,6 @@ def get_vehicles():
     })
 
 
-def find_vehicle(vehicle_id, info):
-    print(tokens)
-    print("Vehicle id ", vehicle_id)
-    if info['vehicles'][0].vehicle_id == vehicle_id:
-        return info['vehicles'][0].vehicle_id
-    raise KeyError('No vehicle_id matching ', vehicle_id, ' for this user')
-
 valid_commands = {
     'honk_horn': None,
     'lights_on': None,
@@ -85,21 +78,21 @@ valid_commands = {
     'trunk_open': {'which_trunk': str},
 }
 
-def validate_json(func):
+def validate_command(func):
     @wraps(func)
     def wrapper(vehicle_id, command):
         try:
-            if not command in list(valid_commands.keys()):
+            if command not in valid_commands:
                 abort(404)
 
             # FIXME Add all form args to kwargs
             command_kwargs = {}
 
-            if valid_commands[command] != None:
+            if valid_commands[command]:
                 for expected_arg, type in valid_commands[command].items():
                     arg = request.form[expected_arg]
 
-                    if (not isinstance(arg, type)):
+                    if not isinstance(arg, type):
                         try:
                             arg = json.loads(arg)
                         except KeyError:
@@ -122,7 +115,7 @@ def validate_json(func):
     return wrapper
 
 @blue_api.route('/vehicles/<vehicle_id>/command/<command>', methods=['POST'])
-@validate_json
+@validate_command
 def handle_command(vehicle_id, command, command_kwargs=None):
 
     info = find_user(request)
@@ -137,7 +130,7 @@ def handle_command(vehicle_id, command, command_kwargs=None):
     method = getattr(vehicle, command, None)
 
     # FIXME Add support for optional arguments (#95)
-    if(method != None):
+    if method:
         method(**command_kwargs)
 
     return send_reply(vehicle_id, command)
@@ -174,7 +167,7 @@ def handle_requests(vehicle_id, request_type):
         if vehicle.get_user_id() != info['email']:
             abort(401)
 
-        if not request_type in valid_requests:
+        if request_type not in valid_requests:
           abort(404);
 
         method = getattr(vehicle, 'get_' + request_type, None)
