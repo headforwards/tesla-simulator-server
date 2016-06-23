@@ -1,5 +1,27 @@
-curl -X POST --data "email=test@123.com&password=1234" http://127.0.0.1:4000/api/1/oauth/token
+curl -X POST --data "email=test@123.com&password=1234" http://127.0.0.1:4000/oauth/token
+#Take id from access_token
 
-curl --header "Authorization: Bearer {test}" http://127.0.0.1:4000/api/1/vehicles
+curl --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles
+#Take vehicle_id
 
-curl -X POST --header "Authorization: Bearer {test}" http://127.0.0.1:4000/api/1/vehicles/test/command/honk_horn
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/honk_horn
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/lights_on
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/lights_off
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/flash_lights
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/wake_up
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/charge_start
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/charge_stop
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/charge_port_door_open
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/charge_standard
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/charge_max_range
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/door_unlock
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/door_lock
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/auto_conditioning_start
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/auto_conditioning_stop
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/set_valet_mode --data 'on=true&password=abc123'
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/reset_valet_pin
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/set_charge_limit --data 'percent=90'
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/remote_start_drive    --data 'password=123abc'
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/set_temps    --data 'driver_temp=22.0&passenger_temp=22.1'
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/sun_roof_control    --data 'state=move&percent=22'
+curl -X POST --header "Authorization: Bearer {<access_token>}" http://127.0.0.1:4000/api/1/vehicles/<vehicle_id>/command/trunk_open --data 'which_trunk=rear'

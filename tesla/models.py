@@ -20,6 +20,48 @@ json.JSONEncoder.default = JSONEncoder_new
 
 
 class TeslaVehicle(object):
+
+    climate_state = {
+        'inside_temp': 17.0,
+        'outside_temp': 9.5,
+        'driver_temp_setting': 22.6,
+        'passenger_temp_setting': 22.6,
+        'is_auto_conditioning_on': False,
+        'is_front_defroster_on': None,
+        'is_rear_defroster_on': False,
+        'fan_status': 0,
+    }
+
+    charge_state = {
+        'charging_state': 'Complete',
+        'charge_to_max_range': False,
+        'max_range_charge_counter': 0,
+        'fast_charger_present': False,
+        'battery_range': 239.02,
+        'est_battery_range': 155.79,
+        'ideal_battery_range': 275.09,
+        'battery_level': 91,
+        'battery_current': -0.6,
+        'charge_starting_range': None,
+        'charge_starting_soc': None,
+        'charger_voltage': 0,
+        'charger_pilot_current': 40,
+        'charger_actual_current': 0,
+        'charger_power': 0,
+        'time_to_full_charge': None,
+        'charge_rate': -1.0,
+        'charge_port_door_open': True,
+    }
+
+    drive_state = {
+        'shift_state': None,
+        'speed': None,
+        'latitude': 33.794839,
+        'longitude': -84.401593,
+        'heading': 4,
+        'gps_as_of': 1359863204,
+    }
+
     def __init__(self, name, user_id, color, vehicle_id=None):
         # FIXME Add data store for vehicle state
         self.color = color
@@ -39,47 +81,6 @@ class TeslaVehicle(object):
         self.is_frunk_open = False
         self.is_trunk_open = False
         self.vehicle_id = vehicle_id or str(uuid.uuid4())
-
-        self.climate_state = {
-            "inside_temp": 17.0,
-            "outside_temp": 9.5,
-            "driver_temp_setting": 22.6,
-            "passenger_temp_setting": 22.6,
-            "is_auto_conditioning_on": False,
-            "is_front_defroster_on": None,
-            "is_rear_defroster_on": False,
-            "fan_status": 0,
-        }
-
-        self.charge_state = {
-            "charging_state": "Complete",
-            "charge_to_max_range": False,
-            "max_range_charge_counter": 0,
-            "fast_charger_present": False,
-            "battery_range": 239.02,
-            "est_battery_range": 155.79,
-            "ideal_battery_range": 275.09,
-            "battery_level": 91,
-            "battery_current": -0.6,
-            "charge_starting_range": None,
-            "charge_starting_soc": None,
-            "charger_voltage": 0,
-            "charger_pilot_current": 40,
-            "charger_actual_current": 0,
-            "charger_power": 0,
-            "time_to_full_charge": None,
-            "charge_rate": -1.0,
-            "charge_port_door_open": True,
-        }
-
-        self.drive_state = {
-            "shift_state": None,
-            "speed": None,
-            "latitude": 33.794839,
-            "longitude": -84.401593,
-            "heading": 4,
-            "gps_as_of": 1359863204,
-        }
 
     def __repr__(self):
         return self.status
@@ -133,15 +134,15 @@ class TeslaVehicle(object):
         return self.status
 
     def charge_standard(self):
-        self.charge_state.charge_to_max_range = False
+        self.charge_state['charge_to_max_range'] = False
         return self.status
 
     def charge_max_range(self):
-        self.charge_state.charge_to_max_range = True
+        self.charge_state['charge_to_max_range'] = True
         return self.status
 
     def charge_limit(self, charge):
-        self.charge_state.charger_power = charge
+        self.charge_state['charger_power'] = charge
         return self.status
 
     def sun_roof_control(self, state, percent=None):
@@ -158,10 +159,10 @@ class TeslaVehicle(object):
 
         return self.status
 
-    def trunk_open(which_trunk):
+    def trunk_open(self, which_trunk):
         if(which_trunk == 'rear'):
             self.is_trunk_open = True
-        elif(which_trunk == 'rear'):
+        elif(which_trunk == 'frunk'):
             self.is_frunk_open = True
 
         return self.status
@@ -173,8 +174,8 @@ class TeslaVehicle(object):
         return self.status
 
     def set_temps(self, driver_temp, passenger_temp):
-        self.climate_state.passenger_temp_setting = passenger_temp
-        self.climate_state.driver_temp_setting = driver_temp
+        self.climate_state['passenger_temp_setting'] = passenger_temp
+        self.climate_state['driver_temp_setting'] = driver_temp
         return self.status
 
     def set_user(self, user_id):
